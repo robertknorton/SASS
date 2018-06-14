@@ -1,0 +1,45 @@
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\cores\arduino
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\variants\mega
+-ID:\Arduino Projects\SASS_Project\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\SPI\src
+-ID:\Arduino Projects\SASS_Project\lib\Adafruit_GFX_Library
+-ID:\Arduino Projects\SASS_Project\lib\Adafruit_HX8357_Library
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\Wire\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\SD\src
+-ID:\Arduino Projects\SASS_Project\lib\GUIslice-0.10.0\src
+-ID:\Arduino Projects\SASS_Project\lib\Adafruit_VL53L0X\src
+-ID:\Arduino Projects\SASS_Project\lib\OneWire
+-ID:\Arduino Projects\SASS_Project\lib\DallasTemperature
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\EEPROM\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\HID\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\SoftwareSerial\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\Adafruit_CircuitPlayground
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\Adafruit_CircuitPlayground\utility
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\Bridge\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\Esplora\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\Ethernet\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\Firmata
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\Firmata\utility
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\GSM\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\Keyboard\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\LiquidCrystal\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\Mouse\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\RobotIRremote\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\Robot_Control\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\Robot_Motor\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\Servo\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\SpacebrewYun\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\Stepper\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\TFT\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\Temboo\src
+-IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\WiFi\src
+-IC:\Users\rober\.platformio\packages\toolchain-atmelavr\avr\include
+-IC:\Users\rober\.platformio\packages\toolchain-atmelavr\lib\gcc\avr\4.9.2\include
+-IC:\Users\rober\.platformio\packages\toolchain-atmelavr\lib\gcc\avr\4.9.2\include-fixed
+-IC:\Users\rober\.platformio\packages\tool-unity
+-DF_CPU=16000000L
+-DPLATFORMIO=30503
+-DARDUINO_AVR_MEGA2560
+-DARDUINO_ARCH_AVR
+-DARDUINO=10805
+-D__AVR_ATmega2560__
