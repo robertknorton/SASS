@@ -146,7 +146,7 @@ void loop()
     {
       Set_Flow_Value = Set_Flow_Value + 10;
       Serial.print("Flow Set Value: "); Serial.println(Set_Flow_Value);
-      delay(100);
+      delay(50);
     }
   }
 /********************************************************************/
@@ -158,7 +158,7 @@ void loop()
     {
       Set_Flow_Value = Set_Flow_Value - 10;
       Serial.print("Flow Set Value: "); Serial.println(Set_Flow_Value);
-      delay(100);
+      delay(50);
     }
   }
 /********************************************************************/
@@ -170,7 +170,7 @@ void loop()
     {
       Set_Temp_Value = ++Set_Temp_Value;
       Serial.print("Temp Set Value: "); Serial.println(Set_Temp_Value);
-      delay(100);
+      delay(50);
     }
   }
 /********************************************************************/
@@ -182,7 +182,7 @@ void loop()
     {
       Set_Temp_Value = --Set_Temp_Value;
       Serial.print("Temp Set Value: "); Serial.println(Set_Temp_Value);
-      delay(100);
+      delay(50);
     }
   }
 /********************************************************************/
@@ -289,6 +289,6 @@ void loop()
   gslc_Update(&m_gui);
 
   // Slow down updates
-  delay(100);
+  //delay(50);
 
 }
