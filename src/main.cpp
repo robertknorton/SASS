@@ -133,79 +133,143 @@ void setup()
   int Set_Flow_Down_State = 0;
   int Set_Flow_Up_State = 0;
   int Water_On_State = 0;
+  int old_Water_On_State = 0;
   int Flow_Control_State = 0;
-
-void loop()
-{
-/********************************************************************/
-  // Set Flow Up Button Logic
-  Set_Flow_Up_State = digitalRead(flow_up_button);
-  if (Set_Flow_Up_State == HIGH)
-  {
-    if (Set_Flow_Value < 100)
-    {
-      Set_Flow_Value = Set_Flow_Value + 10;
-      Serial.print("Flow Set Value: "); Serial.println(Set_Flow_Value);
-      delay(50);
-    }
-  }
-/********************************************************************/
-  // Set Flow Down Button Logic
-  Set_Flow_Down_State = digitalRead(flow_down_button);
-  if (Set_Flow_Down_State == HIGH)
-  {
-    if (Set_Flow_Value > 0)
-    {
-      Set_Flow_Value = Set_Flow_Value - 10;
-      Serial.print("Flow Set Value: "); Serial.println(Set_Flow_Value);
-      delay(50);
-    }
-  }
-/********************************************************************/
-  // Set Temperature Up Button Logic
-  Set_Temp_Up_State = digitalRead(temp_set_up_button);
-  if (Set_Temp_Up_State == HIGH)
-  {
-    if (Set_Temp_Value < 110)
-    {
-      Set_Temp_Value = ++Set_Temp_Value;
-      Serial.print("Temp Set Value: "); Serial.println(Set_Temp_Value);
-      delay(50);
-    }
-  }
-/********************************************************************/
-  // Set Temperature Down Button Logic
-  Set_Temp_Down_State = digitalRead(temp_set_down_button);
-  if (Set_Temp_Down_State == HIGH)
-  {
-    if (Set_Temp_Value > 68)
-    {
-      Set_Temp_Value = --Set_Temp_Value;
-      Serial.print("Temp Set Value: "); Serial.println(Set_Temp_Value);
-      delay(50);
-    }
-  }
-/********************************************************************/
-
-  VL53L0X_RangingMeasurementData_t measure;
 
   char distMeasureTxt[MAX_STR]; // string for updating proximity distance range
   char flowMeasureTxt[MAX_STR]; // string for updating flow range
+  char offMeasureTxt[MAX_STR]; // string for updating flow range
   char tempMeasureTxt[MAX_STR]; // string for updating temp range
 
-  if ((millis() - proxTimer) > proxCheckDelay)
-  {
-    proxTimer = millis(); // resets timer value
-    Serial.print("Reading a measurement... ");
-    lox.rangingTest(&measure, false); // pass in 'true' to get debug data printout!
-    ToF_Measurement = measure.RangeMilliMeter;
+void loop()
+{
+// Initialize VL53L0X measurement data variable
+VL53L0X_RangingMeasurementData_t measure;
 
-    if (measure.RangeStatus != 4) {  // phase failures have incorrect data
-      Serial.print("Distance (mm): "); Serial.println(measure.RangeMilliMeter);
-    } else {
-      Serial.println(" out of range ");
+/********************************************************************/
+  // Check Water On Button and Flow Control Button Logic
+Water_On_State = digitalRead(water_on_toggle);
+Flow_Control_State = digitalRead(flow_control_toggle);
+if (Water_On_State == HIGH) // Water On
+{
+  // Since water is on, request update from Temp Sensor
+  if (millis() - tempTimer > tempCheckDelay)
+  {
+    tempTimer = millis(); // resets timer value
+    tempSensor.requestTemperatures();
+    Water_Temp_Measurement = (tempSensor.getTempCByIndex(0)*1.8)+32;
+    Serial.print("Water Temperature is: ");
+    Serial.println(Water_Temp_Measurement);
+  }
+  /********************************************************************/
+    // Set Temperature Up Button Logic
+    Set_Temp_Up_State = digitalRead(temp_set_up_button);
+    if (Set_Temp_Up_State == HIGH)
+    {
+      if (Set_Temp_Value < 110)
+      {
+        Set_Temp_Value = ++Set_Temp_Value;
+        Serial.print("Temp Set Value: "); Serial.println(Set_Temp_Value);
+        delay(50);
+      }
+    }
+  /********************************************************************/
+    // Set Temperature Down Button Logic
+    Set_Temp_Down_State = digitalRead(temp_set_down_button);
+    if (Set_Temp_Down_State == HIGH)
+    {
+      if (Set_Temp_Value > 68)
+      {
+        Set_Temp_Value = --Set_Temp_Value;
+        Serial.print("Temp Set Value: "); Serial.println(Set_Temp_Value);
+        delay(50);
+      }
+    }
+  /********************************************************************/
+  /*
+          Handle Flow controls logic
+  */
+  if (Flow_Control_State == HIGH) // Proximity Sensor On, manual flow control Off
+  {
+    // TODO - insert logic and assignment of Set_Flow_Value from proximity sensor
+    if ((millis() - proxTimer) > proxCheckDelay)
+    {
+      proxTimer = millis(); // resets timer value
+      Serial.print("Reading a measurement... ");
+      lox.rangingTest(&measure, false); // pass in 'true' to get debug data printout!
+      ToF_Measurement = measure.RangeMilliMeter;
+
+      if (measure.RangeStatus != 4) {  // phase failures have incorrect data
+        Serial.print("Distance (mm): "); Serial.println(measure.RangeMilliMeter);
+      } else {
+        Serial.println(" out of range ");
+      }
     }
   }
+  else // Proximity Sensor Off, manual flow control On
+  {
+    /********************************************************************/
+      // Set Flow Up Button Logic
+      Set_Flow_Up_State = digitalRead(flow_up_button);
+      if (Set_Flow_Up_State == HIGH)
+      {
+        if (Set_Flow_Value < 100)
+        {
+          Set_Flow_Value = Set_Flow_Value + 10;
+          Serial.print("Flow Set Value: "); Serial.println(Set_Flow_Value);
+          delay(50);
+        }
+      }
+    /********************************************************************/
+      // Set Flow Down Button Logic
+      Set_Flow_Down_State = digitalRead(flow_down_button);
+      if (Set_Flow_Down_State == HIGH)
+      {
+        if (Set_Flow_Value > 0)
+        {
+          Set_Flow_Value = Set_Flow_Value - 10;
+          Serial.print("Flow Set Value: "); Serial.println(Set_Flow_Value);
+          delay(50);
+        }
+      }
+    /********************************************************************/
+  }
+}
+else // Water Off
+{
+  Set_Flow_Value = 0;
+  // TODO - add checkbox saying water is off
+  // No input or changing of water flow is allowed.
+
+
+  // Changing of water temp allowed. So when the user does turn on water
+  // it will automaticlly be adjusted to that temperature
+  /********************************************************************/
+    // Set Temperature Up Button Logic
+    Set_Temp_Up_State = digitalRead(temp_set_up_button);
+    if (Set_Temp_Up_State == HIGH)
+    {
+      if (Set_Temp_Value < 110)
+      {
+        Set_Temp_Value = ++Set_Temp_Value;
+        Serial.print("Temp Set Value: "); Serial.println(Set_Temp_Value);
+        delay(50);
+      }
+    }
+  /********************************************************************/
+    // Set Temperature Down Button Logic
+    Set_Temp_Down_State = digitalRead(temp_set_down_button);
+    if (Set_Temp_Down_State == HIGH)
+    {
+      if (Set_Temp_Value > 68)
+      {
+        Set_Temp_Value = --Set_Temp_Value;
+        Serial.print("Temp Set Value: "); Serial.println(Set_Temp_Value);
+        delay(50);
+      }
+    }
+  /********************************************************************/
+}
 
   // Update distance values from TOF on GUI
   // Limit the numerical sensor value of the ToF sensor from 0 to 1000
@@ -230,27 +294,44 @@ void loop()
 
 /********************************************************************/
 
-  // Request and Update Temp Sensor
-  if (millis() - tempTimer > tempCheckDelay)
-  {
-    tempTimer = millis(); // resets timer value
-    tempSensor.requestTemperatures();
-    Water_Temp_Measurement = (tempSensor.getTempCByIndex(0)*1.8)+32;
-    Serial.print("Water Temperature is: ");
-    Serial.println(Water_Temp_Measurement);
-  }
-
   // Update elements on active page
 
   // Updating distance graph in gui
   //gslc_ElemXGaugeUpdate(&m_gui,m_pElemProgress,(ToF_Measurement));
 
+
+
+  // Updating Flow percentage text in GUI  -  All of this nasty GUI resetting
+  // is to ensure proper redrawing and get rid of artifacts
+  if (Water_On_State == LOW && old_Water_On_State == HIGH)
+  {
+    gslc_ElemSetRedraw(&m_gui,ref_DISP_ELEM_FLOW_PROGRESS, GSLC_REDRAW_FULL);
+    snprintf(flowMeasureTxt,MAX_STR,"%s","  ");
+    gslc_ElemSetTxtStr(&m_gui,ref_DISP_ELEM_FLOW_TXT,flowMeasureTxt);
+    gslc_ElemSetRedraw(&m_gui,ref_DISP_ELEM_FLOW_TXT, GSLC_REDRAW_FULL);
+  }
+  else if (Water_On_State == LOW)
+  {
+    snprintf(flowMeasureTxt,MAX_STR,"%s","OFF");
+    gslc_ElemSetTxtStr(&m_gui,ref_DISP_ELEM_FLOW_TXT,flowMeasureTxt);
+  }
+  else if (Water_On_State == HIGH && old_Water_On_State == LOW)
+  {
+    gslc_ElemSetRedraw(&m_gui,ref_DISP_ELEM_FLOW_PROGRESS, GSLC_REDRAW_FULL);
+    Set_Flow_Value = 0;
+    snprintf(flowMeasureTxt,MAX_STR,"%d%%",Set_Flow_Value);
+    gslc_ElemSetTxtStr(&m_gui,ref_DISP_ELEM_FLOW_TXT,flowMeasureTxt);
+    gslc_ElemSetRedraw(&m_gui,ref_DISP_ELEM_FLOW_TXT, GSLC_REDRAW_FULL);
+  }
+  else
+  {
+    snprintf(flowMeasureTxt,MAX_STR,"%d%%",Set_Flow_Value);
+    gslc_ElemSetTxtStr(&m_gui,ref_DISP_ELEM_FLOW_TXT,flowMeasureTxt);
+  }
+  old_Water_On_State = Water_On_State;
+
   // Updating Flow percentage graph in GUI
   gslc_ElemXGaugeUpdate(&m_gui,ref_DISP_ELEM_FLOW_PROGRESS,(Set_Flow_Value*2.5));
-
-  // Updating Flow percentage text in GUI
-  snprintf(flowMeasureTxt,MAX_STR,"%d%%",Set_Flow_Value);
-  gslc_ElemSetTxtStr(&m_gui,ref_DISP_ELEM_FLOW_TXT,flowMeasureTxt);
 
   // Updating Temp degree graph in GUI
   // Logic below is used for determining graph color
