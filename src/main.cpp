@@ -1,14 +1,14 @@
 /*
 Author: Robert Norton
 Project: Senior Design Project: Smart Automated Shower System (SASS)
-Date Last Updated: 6/13/2018
+Date Last Updated: 7/7/2018
 
 Using GUISlice version 0.10.0
 
 ARDUINO NOTES:
 - GUIslice_config.h must be edited to match the pinout connections
 between the Arduino CPU and the display controller (see ADAGFX_PIN_*).
-   */
+ */
 
 #include <Arduino.h>
 // ToF sensor includes
@@ -20,41 +20,7 @@ between the Arduino CPU and the display controller (see ADAGFX_PIN_*).
 #include <Servo.h>
 // GUIslice Defines for LCD display
 #include "display.h"
-
-
-void sweep(Servo myservo)
-{
-  int ustep = 0;
-  for (ustep = 500; ustep <= 2500; ustep += 10)
-  { // goes from 0 degrees to 180 degrees
-    // in steps of 1 degree
-    myservo.writeMicroseconds(ustep);              // tell servo to go to position in variable 'pos'
-    delay(15);                       // waits 15ms for the servo to reach the position
-  }
-  for (ustep = 2500; ustep >= 500; ustep -= 10)
-  { // goes from 180 degrees to 0 degrees
-    myservo.writeMicroseconds(ustep);              // tell servo to go to position in variable 'pos'
-    delay(15);                       // waits 15ms for the servo to reach the position
-  }
-}
-
-// void updateServo(Servo myservo, char type, int val)
-// {
-//     int setVal = 0;
-//     switch (type) {
-//         case 't':
-//             setVal = map(val, 0, 110, 500, 2500);
-//             Serial.print(setVal);
-//             myservo.writeMicroseconds(setVal);
-//             break;
-//         case 'f':
-//             setVal = map(val, 0, 100, 500, 2500);
-//             Serial.print(setVal);
-//             myservo.writeMicroseconds(map(Set_Flow_Value, 0, 100, 500, 2500));
-//             Serial.print(myservo.readMicroseconds());
-//             break;
-//     }
-// }
+#include "SASS.h"
 
 /*
 --------------------------------------------------------------------------------
@@ -74,6 +40,8 @@ const int water_on_toggle      =    32;
 const int flow_control_toggle  =    34;
 const int flow_up_button       =    36;
 const int flow_down_button     =    38;
+const int temp_pot             =    A1;
+const int flow_pot             =    A2;
 
 Adafruit_VL53L0X lox = Adafruit_VL53L0X(); // create a TOF sensor object
 
@@ -95,59 +63,75 @@ Servo servoTemp;
 
 void setup()
 {
-  // Buttons and Inputs
-  pinMode(temp_set_down_button, INPUT);
-  pinMode(temp_set_up_button, INPUT);
-  pinMode(water_on_toggle, INPUT);
-  pinMode(flow_control_toggle, INPUT);
-  pinMode(flow_up_button, INPUT);
-  pinMode(flow_down_button, INPUT);
+    // Buttons and Inputs
+    pinMode(temp_set_down_button, INPUT);
+    pinMode(temp_set_up_button, INPUT);
+    pinMode(water_on_toggle, INPUT);
+    pinMode(flow_control_toggle, INPUT);
+    pinMode(flow_up_button, INPUT);
+    pinMode(flow_down_button, INPUT);
+    pinMode(flow_pot, INPUT);
+    pinMode(temp_pot, INPUT);
 
-  // Servo motors Initialize
-  servoFlow.attach(FLOW_SERVO_PIN);
-  servoFlow.writeMicroseconds(500);
-  servoTemp.attach(TEMP_SERVO_PIN);
-  servoTemp.writeMicroseconds(500);
+    // Servo motors Initialize
+    servoFlow.attach(FLOW_SERVO_PIN);
+    servoFlow.writeMicroseconds(500);
+    servoTemp.attach(TEMP_SERVO_PIN);
+    servoTemp.writeMicroseconds(500);
 
-  Serial.begin(115200);
+    Serial.begin(115200);
 
-  // Initialize debug output for ToF sensor
-  gslc_InitDebug(&DebugOut);
-  delay(1000);  // NOTE: Some devices require a delay after Serial.begin() before serial port can be used
-  // wait until serial port opens for native USB devices
-  while (! Serial) {
-    delay(1);
-  }
+    // Initialize debug output for ToF sensor
+    gslc_InitDebug(&DebugOut);
+    delay(500);
+    // NOTE: Some devices require a delay after Serial.begin() before serial port can be used
+    // wait until serial port opens for native USB devices
+    while (! Serial)
+    {
+        delay(1);
+    }
 
-  Serial.println("Adafruit VL53L0X test");
-  if (!lox.begin()) {
+    Serial.println("Adafruit VL53L0X test");
+    if (!lox.begin()) {
     Serial.println(F("Failed to boot VL53L0X"));
     while(1);
-  }
+    }
 
-  // Start water temperature sensor
-  tempSensor.begin();
+    // Start water temperature sensor
+    tempSensor.begin();
 
-  // Initialize
-  if (!gslc_Init(&m_gui,&m_drv,m_asPage,MAX_PAGE,m_asFont,MAX_FONT)) { return; }
+    // Initialize
+    if (!gslc_Init(&m_gui,&m_drv,m_asPage,MAX_PAGE,m_asFont,MAX_FONT))
+    {
+        return;
+    }
 
-  // Load Fonts
-  #ifdef USE_EXTRA_FONTS
+    // Load Fonts
+    #ifdef USE_EXTRA_FONTS
     // Demonstrate the use of additional fonts (must have #include)
-    if (!gslc_FontAdd(&m_gui,E_FONT_BTN,GSLC_FONTREF_PTR,&FreeSansBold12pt7b,1)) { return; }
-  #else
+    if (!gslc_FontAdd(&m_gui,E_FONT_BTN,GSLC_FONTREF_PTR,&FreeSansBold12pt7b,1))
+    {
+        return;
+    }
+    #else
     // Use default font
-    if (!gslc_FontAdd(&m_gui,E_FONT_BTN,GSLC_FONTREF_PTR,NULL,1)) { return; }
-  #endif
-  if (!gslc_FontAdd(&m_gui,E_FONT_TXT,GSLC_FONTREF_PTR,NULL,1)) { return; }
+    if (!gslc_FontAdd(&m_gui,E_FONT_BTN,GSLC_FONTREF_PTR,NULL,1))
+    {
+        return;
+    }
+    #endif
+    if (!gslc_FontAdd(&m_gui,E_FONT_TXT,GSLC_FONTREF_PTR,NULL,1))
+    {
+        return;
+    }
 
-  // Create graphic elements
-  InitOverlays();
+    // Create graphic elements
+    InitOverlays();
 
-  // Start up display on main page
-  gslc_SetPageCur(&m_gui,DISP_PG_MAIN);
+    // Start up display on main page
+    gslc_SetPageCur(&m_gui,DISP_PG_MAIN);
 
-  m_bQuit = false;
+    m_bQuit = false;
 }
 
 /*
@@ -163,11 +147,13 @@ void setup()
 ------------------------------------------------------------------------------------------
 */
 // The below integers are used for changing how often sensor values are checked
-  const int proxCheckDelay = 1000;
+  const int proxCheckDelay = 2000;
   const int tempCheckDelay = 3000;
+  const int controlsCheckDelay = 1000;
 // Timers for checking when to check sensors
   long proxTimer = millis();
   long tempTimer = millis();
+  long controlTimer = millis();
 // Initialize final measurement variables
   int ToF_Measurement = NULL;
   int Water_Temp_Measurement = NULL;
@@ -176,8 +162,11 @@ void setup()
   int Old_Set_Temp_Value = 110;
   int Set_Flow_Value = 0;
 // Initialize input and input state variables
+  int Set_Temp_Pot = 0;
   int Set_Temp_Down_State = 0;
   int Set_Temp_Up_State = 0;
+  int Set_Temp_State = 0;
+  int Set_Flow_Pot = 0;
   int Set_Flow_Down_State = 0;
   int Set_Flow_Up_State = 0;
   int Water_On_State = 0;
@@ -200,127 +189,80 @@ Water_On_State = digitalRead(water_on_toggle);
 Flow_Control_State = digitalRead(flow_control_toggle);
 if (Water_On_State == HIGH) // Water On
 {
-  // Since water is on, request update from Temp Sensor
-  if (millis() - tempTimer > tempCheckDelay)
-  {
-    tempTimer = millis(); // resets timer value
-    tempSensor.requestTemperatures();
-    Water_Temp_Measurement = (tempSensor.getTempCByIndex(0)*1.8)+32;
-    Serial.print("Water Temperature is: ");
-    Serial.println(Water_Temp_Measurement);
-  }
-  /********************************************************************/
-    // Set Temperature Up Button Logic
-    Set_Temp_Up_State = digitalRead(temp_set_up_button);
-    if (Set_Temp_Up_State == HIGH)
+    // Since water is on, request update from Temp Sensor
+    if (millis() - tempTimer > tempCheckDelay)
     {
-      if (Set_Temp_Value < 110)
-      {
-        Set_Temp_Value = ++Set_Temp_Value;
-        Serial.print("Temp Set Value: "); Serial.println(Set_Temp_Value);
-        delay(50);
-      }
+        tempTimer = millis(); // resets timer value
+        tempSensor.requestTemperatures();
+        Water_Temp_Measurement = (tempSensor.getTempCByIndex(0)*1.8)+32;
+        Serial.print("Water Temperature is: ");
+        Serial.println(Water_Temp_Measurement);
     }
-  /********************************************************************/
-    // Set Temperature Down Button Logic
-    Set_Temp_Down_State = digitalRead(temp_set_down_button);
-    if (Set_Temp_Down_State == HIGH)
+
+    if (millis() - controlTimer > controlsCheckDelay)
     {
-      if (Set_Temp_Value > 68)
-      {
-        Set_Temp_Value = --Set_Temp_Value;
-        Serial.print("Temp Set Value: "); Serial.println(Set_Temp_Value);
-        delay(50);
-      }
+        Set_Temp_Pot = updateTempControl(analogRead(temp_pot));
+        Set_Temp_Value = smooth(Set_Temp_Pot, 0.25, Set_Temp_Value);
+        if (Set_Temp_Value > 110) // make sure its not over max
+        {
+            Set_Temp_Value = 110;
+        }
     }
-  /********************************************************************/
   /*
           Handle Flow controls logic
   */
   if (Flow_Control_State == HIGH) // Proximity Sensor On, manual flow control Off
   {
-    // TODO - insert logic and assignment of Set_Flow_Value from proximity sensor
-    if ((millis() - proxTimer) > proxCheckDelay)
-    {
-      proxTimer = millis(); // resets timer value
-      Serial.print("Reading a measurement... ");
-      lox.rangingTest(&measure, false); // pass in 'true' to get debug data printout!
-      ToF_Measurement = measure.RangeMilliMeter;
+      // TODO - insert logic and assignment of Set_Flow_Value from proximity sensor
+      if ((millis() - proxTimer) > proxCheckDelay)
+      {
+          proxTimer = millis(); // resets timer value
+          Serial.print("Reading a measurement... ");
+          lox.rangingTest(&measure, false); // pass in 'true' to get debug data printout!
+          ToF_Measurement = measure.RangeMilliMeter;
 
-      if (measure.RangeStatus != 4) {  // phase failures have incorrect data
-        Serial.print("Distance (mm): "); Serial.println(measure.RangeMilliMeter);
-      } else {
-        Serial.println(" out of range ");
+          if (measure.RangeStatus != 4)
+          {  // phase failures have incorrect data
+            Serial.print("Distance (mm): "); Serial.println(measure.RangeMilliMeter);
+          }
+          else
+          {
+            Serial.println(" out of range ");
+          }
       }
-    }
   }
   else // Proximity Sensor Off, manual flow control On
   {
-    /********************************************************************/
-      // Set Flow Up Button Logic
-      Set_Flow_Up_State = digitalRead(flow_up_button);
-      if (Set_Flow_Up_State == HIGH)
+      if (millis() - controlTimer > controlsCheckDelay)
       {
-        if (Set_Flow_Value < 100)
-        {
-          Set_Flow_Value = Set_Flow_Value + 10;
-          Serial.print("Flow Set Value: "); Serial.println(Set_Flow_Value);
-          // Update Servo Positions
-          servoFlow.writeMicroseconds(map(Set_Flow_Value, 0, 100, 500, 2500));
-          delay(50);
-        }
+          Set_Flow_Pot = updateFlowControl(analogRead(flow_pot));
+          Set_Flow_Value = smooth(Set_Flow_Pot, 0.25, Set_Flow_Value);
+          if (Set_Flow_Value > 100) // make sure its not over max
+          {
+              Set_Flow_Value = 100;
+          }
       }
-    /********************************************************************/
-      // Set Flow Down Button Logic
-      Set_Flow_Down_State = digitalRead(flow_down_button);
-      if (Set_Flow_Down_State == HIGH)
-      {
-        if (Set_Flow_Value > 0)
-        {
-          Set_Flow_Value = Set_Flow_Value - 10;
-          Serial.print("Flow Set Value: "); Serial.println(Set_Flow_Value);
-          // Update Servo Positions
-          servoFlow.writeMicroseconds(map(Set_Flow_Value, 0, 100, 500, 2500));
-          delay(50);
-        }
-      }
-    /********************************************************************/
   }
 }
 else // Water Off
 {
   Set_Flow_Value = 0;
-  // TODO - add checkbox saying water is off
-  // No input or changing of water flow is allowed.
+    // TODO - add checkbox saying water is off
+    // No input or changing of water flow is allowed.
 
 
   // Changing of water temp allowed. So when the user does turn on water
   // it will automaticlly be adjusted to that temperature
-  /********************************************************************/
-    // Set Temperature Up Button Logic
-    Set_Temp_Up_State = digitalRead(temp_set_up_button);
-    if (Set_Temp_Up_State == HIGH)
-    {
-      if (Set_Temp_Value < 110)
+
+  if (millis() - controlTimer > controlsCheckDelay)
+  {
+      Set_Temp_Pot = updateTempControl(analogRead(temp_pot));
+      Set_Temp_Value = smooth(Set_Temp_Pot, 0.25, Set_Temp_Value);
+      if (Set_Temp_Value > 110) // make sure its not over max
       {
-        Set_Temp_Value = ++Set_Temp_Value;
-        Serial.print("Temp Set Value: "); Serial.println(Set_Temp_Value);
-        delay(50);
+          Set_Temp_Value = 110;
       }
-    }
-  /********************************************************************/
-    // Set Temperature Down Button Logic
-    Set_Temp_Down_State = digitalRead(temp_set_down_button);
-    if (Set_Temp_Down_State == HIGH)
-    {
-      if (Set_Temp_Value > 68)
-      {
-        Set_Temp_Value = --Set_Temp_Value;
-        Serial.print("Temp Set Value: "); Serial.println(Set_Temp_Value);
-        delay(50);
-      }
-    }
-  /********************************************************************/
+  }
 }
 
 

@@ -1,11 +1,11 @@
 -IC:\Users\rober\.platformio\packages\framework-arduinoavr\cores\arduino
 -IC:\Users\rober\.platformio\packages\framework-arduinoavr\variants\mega
--IC:\Users\rober\Desktop\github_repos\SASS\lib\Adafruit_GFX_Library
--IC:\Users\rober\Desktop\github_repos\SASS\lib\Adafruit_HX8357_Library
--IC:\Users\rober\Desktop\github_repos\SASS\lib\Adafruit_VL53L0X\src
--IC:\Users\rober\Desktop\github_repos\SASS\lib\DallasTemperature
--IC:\Users\rober\Desktop\github_repos\SASS\lib\OneWire
--IC:\Users\rober\Desktop\github_repos\SASS\lib\GUIslice-0.10.0\src
+-IC:\Users\rober\Documents\github_repos\SASS\lib\Adafruit_GFX_Library
+-IC:\Users\rober\Documents\github_repos\SASS\lib\Adafruit_HX8357_Library
+-IC:\Users\rober\Documents\github_repos\SASS\lib\Adafruit_VL53L0X\src
+-IC:\Users\rober\Documents\github_repos\SASS\lib\DallasTemperature
+-IC:\Users\rober\Documents\github_repos\SASS\lib\OneWire
+-IC:\Users\rober\Documents\github_repos\SASS\lib\GUIslice-0.10.0\src
 -IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\SPI\src
 -IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\Wire\src
 -IC:\Users\rober\.platformio\packages\framework-arduinoavr\libraries\Firmata
