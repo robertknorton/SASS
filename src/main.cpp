@@ -16,8 +16,45 @@ between the Arduino CPU and the display controller (see ADAGFX_PIN_*).
 // Temp sensor includes
 #include <OneWire.h>
 #include <DallasTemperature.h>
+// Servo motor includes
+#include <Servo.h>
 // GUIslice Defines for LCD display
-#include <display.h>
+#include "display.h"
+
+
+void sweep(Servo myservo)
+{
+  int ustep = 0;
+  for (ustep = 500; ustep <= 2500; ustep += 10)
+  { // goes from 0 degrees to 180 degrees
+    // in steps of 1 degree
+    myservo.writeMicroseconds(ustep);              // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }
+  for (ustep = 2500; ustep >= 500; ustep -= 10)
+  { // goes from 180 degrees to 0 degrees
+    myservo.writeMicroseconds(ustep);              // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }
+}
+
+// void updateServo(Servo myservo, char type, int val)
+// {
+//     int setVal = 0;
+//     switch (type) {
+//         case 't':
+//             setVal = map(val, 0, 110, 500, 2500);
+//             Serial.print(setVal);
+//             myservo.writeMicroseconds(setVal);
+//             break;
+//         case 'f':
+//             setVal = map(val, 0, 100, 500, 2500);
+//             Serial.print(setVal);
+//             myservo.writeMicroseconds(map(Set_Flow_Value, 0, 100, 500, 2500));
+//             Serial.print(myservo.readMicroseconds());
+//             break;
+//     }
+// }
 
 /*
 --------------------------------------------------------------------------------
@@ -50,6 +87,11 @@ OneWire oneWire(ONE_WIRE_BUS);
 // Pass our oneWire reference to Dallas Temperature.
 DallasTemperature tempSensor(&oneWire);
 /********************************************************************/
+#define FLOW_SERVO_PIN 45
+#define TEMP_SERVO_PIN 44
+// Creating Servo objects
+Servo servoFlow;
+Servo servoTemp;
 
 void setup()
 {
@@ -60,6 +102,12 @@ void setup()
   pinMode(flow_control_toggle, INPUT);
   pinMode(flow_up_button, INPUT);
   pinMode(flow_down_button, INPUT);
+
+  // Servo motors Initialize
+  servoFlow.attach(FLOW_SERVO_PIN);
+  servoFlow.writeMicroseconds(500);
+  servoTemp.attach(TEMP_SERVO_PIN);
+  servoTemp.writeMicroseconds(500);
 
   Serial.begin(115200);
 
@@ -217,6 +265,8 @@ if (Water_On_State == HIGH) // Water On
         {
           Set_Flow_Value = Set_Flow_Value + 10;
           Serial.print("Flow Set Value: "); Serial.println(Set_Flow_Value);
+          // Update Servo Positions
+          servoFlow.writeMicroseconds(map(Set_Flow_Value, 0, 100, 500, 2500));
           delay(50);
         }
       }
@@ -229,6 +279,8 @@ if (Water_On_State == HIGH) // Water On
         {
           Set_Flow_Value = Set_Flow_Value - 10;
           Serial.print("Flow Set Value: "); Serial.println(Set_Flow_Value);
+          // Update Servo Positions
+          servoFlow.writeMicroseconds(map(Set_Flow_Value, 0, 100, 500, 2500));
           delay(50);
         }
       }
@@ -270,6 +322,7 @@ else // Water Off
     }
   /********************************************************************/
 }
+
 
   // Update distance values from TOF on GUI
   // Limit the numerical sensor value of the ToF sensor from 0 to 1000
