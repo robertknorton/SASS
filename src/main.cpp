@@ -22,6 +22,7 @@ between the Arduino CPU and the display controller (see ADAGFX_PIN_*).
 #include "display.h"
 #include "SASS.h"
 
+
 /*
 --------------------------------------------------------------------------------
                          _____      _
@@ -149,18 +150,22 @@ void setup()
 // The below integers are used for changing how often sensor values are checked
   const int proxCheckDelay = 2000;
   const int tempCheckDelay = 3000;
-  const int controlsCheckDelay = 1000;
+  const int controlsCheckDelay = 200;
+  const int statusCheckDelay = 5000;
 // Timers for checking when to check sensors
   long proxTimer = millis();
   long tempTimer = millis();
   long controlTimer = millis();
+  long statusTimer = millis();
 // Initialize final measurement variables
-  int ToF_Measurement = NULL;
-  int Water_Temp_Measurement = NULL;
+  int ToF_Measurement = 0;
+  int Water_Temp_Measurement = 0;
 // Initialize setting variables
   int Set_Temp_Value = 110;
+  int Read_Temp_Value = 0;
   int Old_Set_Temp_Value = 110;
   int Set_Flow_Value = 0;
+  int Read_Flow_Value = 0;
 // Initialize input and input state variables
   int Set_Temp_Pot = 0;
   int Set_Temp_Down_State = 0;
@@ -181,12 +186,13 @@ void setup()
 void loop()
 {
 // Initialize VL53L0X measurement data variable
-VL53L0X_RangingMeasurementData_t measure;
+VL53L0X_RangingMeasurementData_t proximitySensor;
 
 /********************************************************************/
   // Check Water On Button and Flow Control Button Logic
 Water_On_State = digitalRead(water_on_toggle);
 Flow_Control_State = digitalRead(flow_control_toggle);
+
 if (Water_On_State == HIGH) // Water On
 {
     // Since water is on, request update from Temp Sensor
@@ -195,8 +201,9 @@ if (Water_On_State == HIGH) // Water On
         tempTimer = millis(); // resets timer value
         tempSensor.requestTemperatures();
         Water_Temp_Measurement = (tempSensor.getTempCByIndex(0)*1.8)+32;
-        Serial.print("Water Temperature is: ");
-        Serial.println(Water_Temp_Measurement);
+        //Serial.print("Water Temperature is: ");
+        //Serial.println(Water_Temp_Measurement);
+        Read_Temp_Value = Water_Temp_Measurement;
     }
 
     if (millis() - controlTimer > controlsCheckDelay)
@@ -217,17 +224,21 @@ if (Water_On_State == HIGH) // Water On
       if ((millis() - proxTimer) > proxCheckDelay)
       {
           proxTimer = millis(); // resets timer value
-          Serial.print("Reading a measurement... ");
-          lox.rangingTest(&measure, false); // pass in 'true' to get debug data printout!
-          ToF_Measurement = measure.RangeMilliMeter;
+          //Serial.print("Reading a measurement... ");
+          lox.rangingTest(&proximitySensor, false); // pass in 'true' to get debug data printout!
+          ToF_Measurement = mmToft(proximitySensor.RangeMilliMeter);
 
-          if (measure.RangeStatus != 4)
-          {  // phase failures have incorrect data
-            Serial.print("Distance (mm): "); Serial.println(measure.RangeMilliMeter);
+          if (ToF_Measurement < 1.0)
+          {
+              Set_Flow_Value = 100;
+          }
+          else if (ToF_Measurement < 1.25)
+          {
+              Set_Flow_Value = 50;
           }
           else
           {
-            Serial.println(" out of range ");
+              Set_Flow_Value = 0;
           }
       }
   }
@@ -241,6 +252,10 @@ if (Water_On_State == HIGH) // Water On
           {
               Set_Flow_Value = 100;
           }
+          else if (Set_Flow_Value < 5)
+          {
+              Set_Flow_Value = 0;
+          }
       }
   }
 }
@@ -250,12 +265,12 @@ else // Water Off
     // TODO - add checkbox saying water is off
     // No input or changing of water flow is allowed.
 
-
   // Changing of water temp allowed. So when the user does turn on water
   // it will automaticlly be adjusted to that temperature
 
   if (millis() - controlTimer > controlsCheckDelay)
   {
+      controlTimer = millis();  // resets timer value
       Set_Temp_Pot = updateTempControl(analogRead(temp_pot));
       Set_Temp_Value = smooth(Set_Temp_Pot, 0.25, Set_Temp_Value);
       if (Set_Temp_Value > 110) // make sure its not over max
@@ -264,6 +279,13 @@ else // Water Off
       }
   }
 }
+
+/*
+*  Update all servo positions
+*/
+updateServoPosition(servoFlow, Set_Flow_Value, 0, 100);
+// updateServoPosition(servoTemp, Set_Temp_Value, 0, 110);
+
 
 
   // Update distance values from TOF on GUI
@@ -361,6 +383,12 @@ else // Water Off
   //   gslc_ElemXCheckboxSetState(&m_gui, m_pElemCheckBox1, false);
   // }
 
+  // Print a serial output of current system states and measurments
+  if (millis() - statusTimer > statusCheckDelay)
+  {
+      statusTimer = millis();  // resets timer value
+      systemStatusPrint(Set_Flow_Value, Read_Flow_Value, Set_Temp_Value, Read_Temp_Value, proximitySensor);
+  }
   // Periodically call GUIslice update function
   gslc_Update(&m_gui);
 

@@ -44,6 +44,13 @@ int updateTempControl(int pot)
     return temp_val;
 }
 
+void updateServoPosition(Servo myservo, int newVal, int minInput, int maxInput)
+{
+    int setVal = map(newVal, minInput, maxInput, 500, 2500);
+    // Serial.print("Flow Servo Set: "); Serial.println(setVal);
+    myservo.writeMicroseconds(setVal);
+}
+
 int smooth(int data, float filterVal, float smoothedVal)
 {
     if (filterVal > 1)
@@ -56,6 +63,29 @@ int smooth(int data, float filterVal, float smoothedVal)
     }
     smoothedVal = (data * (1 - filterVal)) + (smoothedVal  *  filterVal);
     return (int)smoothedVal;
+}
+
+float mmToft(int dist)
+{
+    return (dist*0.00328084);
+}
+
+void systemStatusPrint(int setWF, int setWT, int actualWF, int actualWT, VL53L0X_RangingMeasurementData_t proxSensor)
+{
+    Serial.print("Set WF: "); Serial.print(setWF); Serial.print(", ");
+    Serial.print("Actual WF: "); Serial.print(actualWF); Serial.print(", ");
+    Serial.print("Set WT: "); Serial.print(setWT); Serial.print(", ");
+    Serial.print("Actual WT: "); Serial.print(actualWF); Serial.print(", ");
+
+    if (proxSensor.RangeStatus != 4)
+    {  // phase failures have incorrect data
+        Serial.print("Proximity Dist (ft): ");
+        Serial.println(mmToft(proxSensor.RangeMilliMeter));
+    }
+    else
+    {
+        Serial.println("Proximity Dist: out of range ");
+    }
 }
 
 // void updateServo(Servo myservo, char type, int val)
