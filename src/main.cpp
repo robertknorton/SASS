@@ -383,15 +383,32 @@ updateServoPosition(servoFlow, Set_Flow_Value, 0, 100);
   //   gslc_ElemXCheckboxSetState(&m_gui, m_pElemCheckBox1, false);
   // }
 
+  int flow_up_state = digitalRead(flow_up_button);
+  int flow_down_state = digitalRead(flow_down_button);
+  if (flow_up_state)
+  {
+      gslc_ElemSetGlow(&m_gui, ref_DISP_ELEM_BACK_BTN, true);
+  }
+  if (flow_down_state)
+  {
+      gslc_ElemSetGlow(&m_gui, ref_DISP_ELEM_BACK_BTN, false);
+  }
+
+
   // Print a serial output of current system states and measurments
   if (millis() - statusTimer > statusCheckDelay)
   {
       statusTimer = millis();  // resets timer value
       systemStatusPrint(Set_Flow_Value, Read_Flow_Value, Set_Temp_Value, Read_Temp_Value, proximitySensor);
   }
-  // Periodically call GUIslice update function
-  gslc_Update(&m_gui);
 
+
+  // Periodically call GUIslice update function
+  // gslc_Update(&m_gui);
+  if (millis() - controlTimer > controlsCheckDelay)
+  {
+      gslc_Update(&m_gui);
+  }
   // Slow down updates
   //delay(50);
 
