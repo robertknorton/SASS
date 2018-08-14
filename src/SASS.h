@@ -88,6 +88,33 @@ void systemStatusPrint(int setWF, int setWT, int actualWF, int actualWT, VL53L0X
     }
 }
 
+int checkEncoder(long* position, long newReading)
+{
+    if (newReading != *position)
+    {
+        // Serial.print("New Reading: ");
+        // Serial.println(newReading);
+        // Serial.print("Cur Pos: ");
+        // Serial.println(*position);
+        if (newReading > *position)
+        {
+            *position = newReading;
+            // Serial.println("Encoder = Left");
+            return 1;  // left
+        }
+        else if (newReading < *position)
+        {
+            *position = newReading;
+            // Serial.println("Encoder = Right");
+            return 2; // right
+        }
+    }
+    else
+    {
+        return 0;
+    }
+}
+
 // void updateServo(Servo myservo, char type, int val)
 // {
 //     int setVal = 0;

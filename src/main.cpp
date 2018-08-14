@@ -16,6 +16,8 @@ between the Arduino CPU and the display controller (see ADAGFX_PIN_*).
 // Temp sensor includes
 #include <OneWire.h>
 #include <DallasTemperature.h>
+// Encoder includes
+#include <Encoder.h>
 // Servo motor includes
 #include <Servo.h>
 // GUIslice Defines for LCD display
@@ -35,6 +37,9 @@ between the Arduino CPU and the display controller (see ADAGFX_PIN_*).
                                              |_|
 --------------------------------------------------------------------------------
 */
+const int encoder_button       =    7;
+const int encoder_B_line       =    6;
+const int encoder_A_line       =    5;
 const int temp_set_down_button =    28;
 const int temp_set_up_button   =    30;
 const int water_on_toggle      =    32;
@@ -52,6 +57,10 @@ Adafruit_VL53L0X lox = Adafruit_VL53L0X(); // create a TOF sensor object
 // Setup a oneWire instance to communicate with any OneWire devices
 // (not just Maxim/Dallas temperature ICs)
 OneWire oneWire(ONE_WIRE_BUS);
+
+// Rotory Encoder for control within GUI
+Encoder controlKnob(encoder_A_line, encoder_B_line);
+
 /********************************************************************/
 // Pass our oneWire reference to Dallas Temperature.
 DallasTemperature tempSensor(&oneWire);
@@ -73,6 +82,7 @@ void setup()
     pinMode(flow_down_button, INPUT);
     pinMode(flow_pot, INPUT);
     pinMode(temp_pot, INPUT);
+    pinMode(encoder_button, INPUT);
 
     // Servo motors Initialize
     servoFlow.attach(FLOW_SERVO_PIN);
@@ -148,40 +158,42 @@ void setup()
 ------------------------------------------------------------------------------------------
 */
 // The below integers are used for changing how often sensor values are checked
-  const int proxCheckDelay = 2000;
-  const int tempCheckDelay = 3000;
-  const int controlsCheckDelay = 200;
-  const int statusCheckDelay = 5000;
+const int proxCheckDelay = 2000;
+const int tempCheckDelay = 3000;
+const int controlsCheckDelay = 100;
+const int statusCheckDelay = 5000;
+// Encoder variables
+long encoderPosition = -999;
 // Timers for checking when to check sensors
-  long proxTimer = millis();
-  long tempTimer = millis();
-  long controlTimer = millis();
-  long statusTimer = millis();
+long proxTimer = millis();
+long tempTimer = millis();
+long controlTimer = millis();
+long statusTimer = millis();
 // Initialize final measurement variables
-  int ToF_Measurement = 0;
-  int Water_Temp_Measurement = 0;
+int ToF_Measurement = 0;
+int Water_Temp_Measurement = 0;
 // Initialize setting variables
-  int Set_Temp_Value = 110;
-  int Read_Temp_Value = 0;
-  int Old_Set_Temp_Value = 110;
-  int Set_Flow_Value = 0;
-  int Read_Flow_Value = 0;
+int Set_Temp_Value = 110;
+int Read_Temp_Value = 0;
+int Old_Set_Temp_Value = 110;
+int Set_Flow_Value = 0;
+int Read_Flow_Value = 0;
 // Initialize input and input state variables
-  int Set_Temp_Pot = 0;
-  int Set_Temp_Down_State = 0;
-  int Set_Temp_Up_State = 0;
-  int Set_Temp_State = 0;
-  int Set_Flow_Pot = 0;
-  int Set_Flow_Down_State = 0;
-  int Set_Flow_Up_State = 0;
-  int Water_On_State = 0;
-  int old_Water_On_State = 0;
-  int Flow_Control_State = 0;
+int Set_Temp_Pot = 0;
+int Set_Temp_Down_State = 0;
+int Set_Temp_Up_State = 0;
+int Set_Temp_State = 0;
+int Set_Flow_Pot = 0;
+int Set_Flow_Down_State = 0;
+int Set_Flow_Up_State = 0;
+int Water_On_State = 0;
+int old_Water_On_State = 0;
+int Flow_Control_State = 0;
 
-  char distMeasureTxt[MAX_STR]; // string for updating proximity distance range
-  char flowMeasureTxt[MAX_STR]; // string for updating flow range
-  char offMeasureTxt[MAX_STR]; // string for updating flow range
-  char tempMeasureTxt[MAX_STR]; // string for updating temp range
+char distMeasureTxt[MAX_STR]; // string for updating proximity distance range
+char flowMeasureTxt[MAX_STR]; // string for updating flow range
+char offMeasureTxt[MAX_STR]; // string for updating flow range
+char tempMeasureTxt[MAX_STR]; // string for updating temp range
 
 void loop()
 {
@@ -401,6 +413,59 @@ updateServoPosition(servoFlow, Set_Flow_Value, 0, 100);
       statusTimer = millis();  // resets timer value
       systemStatusPrint(Set_Flow_Value, Read_Flow_Value, Set_Temp_Value, Read_Temp_Value, proximitySensor);
   }
+
+  // Check encoder
+  long encoderReading = controlKnob.read();
+  int dir = checkEncoder(&encoderPosition, encoderReading);
+
+  if (dir == 1) // Moved Up menu
+  {
+      if (gslc_GetPageCur(&m_gui) == DISP_PG_MAIN)
+      {
+          Serial.println("A1");
+          for (int i = 0; i < sizeof(E_SHOWER_BTNS); i++)
+          {
+              bool glowing = gslc_ElemGetGlow(&m_gui, E_SHOWER_BTNS[i]);
+              if (glowing == true)
+              {
+                  Serial.println("A2");
+                  // Reset current btns glow to false
+                  gslc_ElemSetGlow(&m_gui, E_SHOWER_BTNS[i], false);
+                  // Set new glow
+                  gslc_ElemSetGlow(&m_gui, E_SHOWER_BTNS[i+1], true);
+                  Serial.println("Up");
+                  break;
+              }
+          }
+      }
+
+  }
+  else if (dir == 2) // Move Down MENU
+  {
+      if (gslc_GetPageCur(&m_gui) == DISP_PG_MAIN)
+      {
+          Serial.println("B1");
+          for (int i = 0; i < sizeof(E_SHOWER_BTNS); i++)
+          {
+              bool glowing = gslc_ElemGetGlow(&m_gui, E_SHOWER_BTNS[i]);
+              if (glowing == true)
+              {
+                  Serial.println("B2");
+                  // Reset current btns glow to false
+                  gslc_ElemSetGlow(&m_gui, E_SHOWER_BTNS[i], false);
+                  // Set new glow
+                  gslc_ElemSetGlow(&m_gui, E_SHOWER_BTNS[i-1], true);
+                  Serial.println("Down");
+                  break;
+              }
+          }
+      }
+  }
+  else
+  {
+      //Do nothing stay on current selection
+  }
+
 
 
   // Periodically call GUIslice update function

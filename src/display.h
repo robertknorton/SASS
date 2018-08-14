@@ -41,6 +41,8 @@ between the Arduino CPU and the display controller (see ADAGFX_PIN_*).
 enum {DISP_PG_MENU, DISP_PG_MAIN};
 // Elements
 enum {DISP_ELEM_BG_BOX,
+      DISP_ELEM_START_BTN,
+      DISP_ELEM_STOP_BTN,
       DISP_ELEM_BACK_BTN,
       //E_ELEM_TXT_COUNT,
       //E_ELEM_PROGRESS,
@@ -59,7 +61,9 @@ enum {
         TEMP_DEGREE_FONT_TXT
         };
 // Group
-enum {E_GROUP1};
+enum {
+    // E_SHOWER_BTNS
+    };
 
 bool        m_bQuit = false;
 
@@ -68,7 +72,7 @@ unsigned    m_nCount = 0;
 
 
 // Instantiate the GUI
-#define MAX_PAGE                3
+#define MAX_PAGE                6
 #define MAX_FONT                5
 
 // Define the maximum number of elements per page
@@ -96,8 +100,12 @@ gslc_tsXGauge               m_sXGauge,FLOW_Gauge_obj,TEMP_Gauge_obj;
   gslc_tsElemRef*  ref_DISP_ELEM_TEMP_PROGRESS = NULL;
   gslc_tsElemRef*  ref_DISP_ELEM_FLOW_TXT      = NULL;
   gslc_tsElemRef*  ref_DISP_ELEM_TEMP_TXT      = NULL;
+  gslc_tsElemRef*  ref_DISP_ELEM_START_BTN     = NULL;
+  gslc_tsElemRef*  ref_DISP_ELEM_STOP_BTN      = NULL;
   gslc_tsElemRef*  ref_DISP_ELEM_BACK_BTN      = NULL;
 
+
+gslc_tsElemRef* E_SHOWER_BTNS[] = {ref_DISP_ELEM_START_BTN, ref_DISP_ELEM_STOP_BTN, ref_DISP_ELEM_BACK_BTN};
 
 // Define debug message function
 static int16_t DebugOut(char ch) { Serial.write(ch); return 0; }
@@ -145,7 +153,7 @@ bool InitOverlays()
               MENU_GENERAL_FONT,
               GSLC_FONTREF_PTR,
               NULL,
-              5);
+              4);
 
     #define bgColor           GSLC_COL_GRAY_DK3
     #define textColor         GSLC_COL_GRAY_LT2
@@ -220,18 +228,58 @@ bool InitOverlays()
                 bgColor,
                 GSLC_COL_BLACK);
     // ===============================================================================================
+    // Start Button
+    ref_PLACEHOLDER = gslc_ElemCreateBtnTxt(&m_gui,
+                                            DISP_ELEM_START_BTN,
+                                            DISP_PG_MAIN,
+                                            (gslc_tsRect){175,170,130,50}, //{x,y,w,h}
+                                            "Start",
+                                            6,
+                                            MENU_GENERAL_FONT,
+                                            Cb_BackBtn); // GSLC_CB_TOUCH cbTouch
+    gslc_ElemSetTxtAlign(&m_gui,
+                         ref_PLACEHOLDER,
+                         GSLC_ALIGN_MID_MID);
+    gslc_ElemSetCol(&m_gui,
+                    ref_PLACEHOLDER,
+                    GSLC_COL_GREEN_LT2,
+                    GSLC_COL_GREEN_DK2,
+                    GSLC_COL_GREEN_LT1);
+
+    ref_DISP_ELEM_START_BTN = ref_PLACEHOLDER; // Save for quick access
+    // ===============================================================================================
+    // Stop Button
+    ref_PLACEHOLDER = gslc_ElemCreateBtnTxt(&m_gui,
+                                            DISP_ELEM_STOP_BTN,
+                                            DISP_PG_MAIN,
+                                            (gslc_tsRect){175,220,130,50}, //{x,y,w,h}
+                                            "Stop",
+                                            6,
+                                            MENU_GENERAL_FONT,
+                                            Cb_BackBtn); // GSLC_CB_TOUCH cbTouch
+    gslc_ElemSetTxtAlign(&m_gui,
+                         ref_PLACEHOLDER,
+                         GSLC_ALIGN_MID_MID);
+    gslc_ElemSetCol(&m_gui,
+                    ref_PLACEHOLDER,
+                    GSLC_COL_RED_LT2,
+                    GSLC_COL_RED_LT3,
+                    GSLC_COL_RED_LT1);
+
+    ref_DISP_ELEM_STOP_BTN = ref_PLACEHOLDER; // Save for quick access
+    // ===============================================================================================
     // Back Button
     ref_PLACEHOLDER = gslc_ElemCreateBtnTxt(&m_gui,
                                             DISP_ELEM_BACK_BTN,
                                             DISP_PG_MAIN,
-                                            (gslc_tsRect){175,240,130,60}, //{x,y,w,h}
+                                            (gslc_tsRect){175,270,130,50}, //{x,y,w,h}
                                             "Back",
                                             6,
                                             MENU_GENERAL_FONT,
                                             Cb_BackBtn); // GSLC_CB_TOUCH cbTouch
     gslc_ElemSetTxtAlign(&m_gui,
                          ref_PLACEHOLDER,
-                         GSLC_ALIGN_MID_RIGHT);
+                         GSLC_ALIGN_MID_MID);
     gslc_ElemSetCol(&m_gui,
                     ref_PLACEHOLDER,
                     GSLC_COL_BLUE_LT2,
